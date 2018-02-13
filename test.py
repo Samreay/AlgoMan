@@ -1,6 +1,6 @@
 import numpy as np
 
-from config import get_client, get_trade_coins
+from util.config import get_client
 
 client = get_client()
 prices_raw = client.get_all_tickers()
