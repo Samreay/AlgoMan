@@ -12,6 +12,7 @@ class RepeatedTimer(object):
         self.is_running = False
         self.next_call = time.time()
         self.start()
+        self.function(*self.args, **self.kwargs)
 
     def _run(self):
         self.is_running = False
@@ -24,7 +25,6 @@ class RepeatedTimer(object):
             self._timer = threading.Timer(self.next_call - time.time(), self._run)
             self._timer.start()
             self.is_running = True
-            self.function(*self.args, **self.kwargs)
 
     def stop(self):
         self._timer.cancel()

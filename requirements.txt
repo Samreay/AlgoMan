@@ -1,3 +1,6 @@
 python-binance
 numpy
-pypubsub
+pydispatch
+flask
+scipy
+pytrends
