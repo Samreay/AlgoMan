@@ -4,7 +4,6 @@ from datetime import datetime
 import requests
 import gzip
 
-from util.util import DateTimeEncoder
 from util.config import get_client, get_trade_coins
 from util.timer import RepeatedTimer
 
@@ -20,14 +19,14 @@ def get_info(client, symbols):
     for s in symbols:
         print("Depth and ticker for %s" % s)
         tfhour[s] = client.get_ticker(symbol=s)
-        depth_raw[s] = client.get_order_book(symbol=s, limit=1000)
-        time.sleep(0.2)
-        recent[s] = client.get_recent_trades(symbol=s, limit=500)
-        time.sleep(0.2)
-        trades_5m[s] = client.get_klines(symbol=s, interval="5m", limit=500)
-        time.sleep(0.05)
-        trades_2h[s] = client.get_klines(symbol=s, interval="2h", limit=500)
-        time.sleep(0.05)
+        depth_raw[s] = client.get_order_book(symbol=s, limit=500)
+        time.sleep(0.3)
+        recent[s] = client.get_recent_trades(symbol=s, limit=100)
+        time.sleep(0.3)
+        trades_5m[s] = client.get_klines(symbol=s, interval="5m", limit=100)
+        time.sleep(0.15)
+        trades_2h[s] = client.get_klines(symbol=s, interval="2h", limit=100)
+        time.sleep(0.15)
     return t, prices_raw, depth_raw, tfhour, trades_5m, trades_2h, recent
 
 

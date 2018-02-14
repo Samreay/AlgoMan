@@ -5,6 +5,7 @@ from util.util import chunks
 import pandas as pd
 from datetime import datetime, timedelta
 
+
 class Augmentor(object):
     def __init__(self):
         dispatcher.connect(self.augment_data, signal="digested_data", sender=dispatcher.Any)
@@ -13,9 +14,9 @@ class Augmentor(object):
         # make this work for a given date
         if date is None:
             date = datetime.now()
-        date_old = date  - timedelta(days=30)
+        date_old = date - timedelta(days=30)
         timeframe = '%s %s' % (date_old.strftime('%Y-%m-%d'), date.strftime('%Y-%m-%d'))
-        
+
         coins = get_trade_coin_names()
         datas = []
         for chunk in chunks(coins, 4):
@@ -26,13 +27,15 @@ class Augmentor(object):
             frame = pytrends.interest_over_time()
             frame.drop('isPartial', axis=1, inplace=True)
             datas.append(frame)
-            
+
         data = pd.concat(datas, axis=1)
         print(data)
         return data
-        
-    def augment_data(self, message):
-        print(message)
+
+    def augment_data(self, data):
+        print(data)
+        dispatcher.send(signal="augmented_data", data=data)
+
 
 if __name__ == "__main__":
     a = Augmentor()

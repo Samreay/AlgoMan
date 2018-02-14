@@ -34,11 +34,11 @@ class RawDataDigester(object):
 
             vals = self.digest_24hour(tfhour)
             digest_x, digest_y = self.digest_depth(price, depth_raw)
-            kline_5m_x, kline_5m_y = self.digest_klines(history_5m)
-            kline_2h_x, kline_2h_y = self.digest_klines(history_2h)
+            kline_5m_x, kline_5m_y, last_price = self.digest_klines(history_5m)
+            kline_2h_x, kline_2h_y, _ = self.digest_klines(history_2h)
             recent = self.digest_recent(trades)
     
-            x.append(np.concatenate((vals, digest_y, kline_5m_y, kline_2h_y, recent)))
+            x.append(np.concatenate(([last_price], vals, digest_y, kline_5m_y, kline_2h_y, recent)))
         x = np.array(x).astype(np.float32)
         message = {"time": int(time), "data": x}
         try:
@@ -46,15 +46,16 @@ class RawDataDigester(object):
             np.save("%s/%s" % (self.digested, filename), x)
         except Exception as e:
             print(e)
-        dispatcher.send(message=message, signal="digested_data")
+        dispatcher.send(data=message, signal="digested_data")
         return x
 
     def digest_24hour(self, data):
-        return [float(data["priceChangePercent"]), float(data["lowPrice"])/float(data["lastPrice"]), float(data["highPrice"])/float(data["lastPrice"]), float(data["quoteVolume"])]
+        return [float(data["lastPrice"]), float(data["priceChangePercent"]), float(data["lowPrice"])/float(data["lastPrice"]), float(data["highPrice"])/float(data["lastPrice"]), float(data["quoteVolume"])]
 
     def digest_recent(self, trades, bins=50):
         data = np.array([[float(x["time"]), float(x["price"]), float(x["qty"])] for x in trades])
-        
+        data = data[-100:, :]
+
         times, prices, qty = data.T
         xs = np.arange(len(times))
         prices = 100 * (prices / prices[-1] - 1)
@@ -73,6 +74,7 @@ class RawDataDigester(object):
     def digest_klines(self, klines, bins=100):
         data = [[float(x[0]), 0.5 * (float(x[1]) + float(x[2]))] for x in klines]
         data = np.array(data)
+        data = data[-100:, :]
         
         times = data[:, 0] - data[:, 0][-1]
         change = 100 * (data[:, 1] / data[:, 1][-1] - 1)
@@ -88,7 +90,7 @@ class RawDataDigester(object):
         if self.debug:
             import matplotlib.pyplot as plt
             plt.plot(binc, hist)
-        return binc, hist
+        return binc, hist, data[-1, 1]
 
     def digest_depth(self, price, depth):
         depth_norm = [(100 * float(row[0]) / price) - 100 for row in depth["bids"][::-1]] + [(100 * float(row[0]) / price) - 100 for row in depth["asks"]]
